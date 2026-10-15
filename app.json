@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "FINX",
+    "slug": "finx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "finx",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.finx.security"
+    },
+    "android": {
+      "package": "com.finx.security",
+      "versionCode": 1
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "33208e4f-5418-4ef7-bd84-eba3eb94b312"
+      }
+    }
+  }
+}
