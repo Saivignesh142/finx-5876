@@ -5,7 +5,7 @@ const HISTORY_KEY = "@finx/history/v1";
 const LANGUAGE_KEY = "@finx/language/v1";
 const THEME_KEY = "@finx/theme/v1";
 const PROFILE_PHOTO_KEY = "@finx/profile-photo/v1";
-const MAX_PROFILE_PHOTO_URI_LENGTH = 4_096;
+const MAX_PROFILE_PHOTO_URI_LENGTH = 1_500_000;
 
 type StoredHistoryRecord = Omit<ScanHistoryRecord, "method"> & { method: string };
 
@@ -55,6 +55,10 @@ export async function saveTheme(theme: ThemePreference): Promise<void> {
 export async function loadProfilePhoto(): Promise<string | null> {
   const uri = await AsyncStorage.getItem(PROFILE_PHOTO_KEY);
   if (uri === null) return null;
+  if (uri.startsWith("blob:")) {
+    await AsyncStorage.removeItem(PROFILE_PHOTO_KEY);
+    return null;
+  }
   if (!uri.trim() || uri.length > MAX_PROFILE_PHOTO_URI_LENGTH) {
     throw new Error("Saved profile photo reference is invalid.");
   }
@@ -63,7 +67,7 @@ export async function loadProfilePhoto(): Promise<string | null> {
 
 export async function saveProfilePhoto(uri: string): Promise<void> {
   const normalized = uri.trim();
-  if (!normalized || normalized.length > MAX_PROFILE_PHOTO_URI_LENGTH) {
+  if (!normalized || normalized.startsWith("blob:") || normalized.length > MAX_PROFILE_PHOTO_URI_LENGTH) {
     throw new Error("Profile photo reference is invalid or too long.");
   }
   await AsyncStorage.setItem(PROFILE_PHOTO_KEY, normalized);

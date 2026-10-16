@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import Feather from "@expo/vector-icons/Feather";
-import { ActivityIndicator, Image, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { ActivityIndicator, Image, Platform, Pressable, SafeAreaView, StatusBar, StyleSheet, Text, useColorScheme, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import HomeScreen from "./src/screens/HomeScreen";
 import ScanScreen from "./src/screens/ScanScreen";
@@ -204,9 +204,13 @@ export default function App() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.75,
+        base64: Platform.OS === "web",
       });
       if (selection.canceled) return;
-      const uri = selection.assets[0]?.uri;
+      const asset = selection.assets[0];
+      const uri = Platform.OS === "web" && asset?.base64
+        ? `data:${asset.mimeType ?? "image/jpeg"};base64,${asset.base64}`
+        : asset?.uri;
       if (!uri) throw new Error("Image picker returned no photo URI.");
       await saveProfilePhoto(uri);
       setProfilePhotoUri(uri);

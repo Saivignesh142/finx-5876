@@ -52,4 +52,16 @@ describe("local history storage", () => {
     getItem.mockResolvedValue(" ");
     await expect(loadProfilePhoto()).rejects.toThrow(/invalid/i);
   });
+
+  it("clears expired browser blob URLs from profile storage", async () => {
+    getItem.mockResolvedValue("blob:http://localhost:8081/expired-photo");
+    removeItem.mockResolvedValue(undefined);
+
+    await expect(loadProfilePhoto()).resolves.toBeNull();
+    expect(removeItem).toHaveBeenCalledWith("@finx/profile-photo/v1");
+  });
+
+  it("rejects browser blob URLs instead of persisting an expiring photo reference", async () => {
+    await expect(saveProfilePhoto("blob:http://localhost:8081/temporary-photo")).rejects.toThrow(/invalid/i);
+  });
 });
