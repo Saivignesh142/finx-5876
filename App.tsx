@@ -11,25 +11,23 @@ import ProfileScreen from "./src/screens/ProfileScreen";
 import LoginScreen from "./src/screens/LoginScreen";
 import SignupScreen from "./src/screens/SignupScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
-import AssistantScreen from "./src/screens/AssistantScreen";
 import AppLogo from "./src/components/AppLogo";
 import { getThemeColors, ThemeProvider, type ThemeColors } from "./src/theme/ThemeContext";
 import { translate, type TranslationKey } from "./src/constants/translations";
-import { analyzeWithBackend, hasBackendConfiguration } from "./src/services/api";
 import { analyzeContent } from "./src/services/scamDetector";
 import { clearHistory as clearStoredHistory, clearProfilePhoto, loadHistory, loadLanguage, loadProfilePhoto, loadTheme, saveHistory, saveLanguage, saveProfilePhoto, saveTheme } from "./src/services/storage";
 import { authErrorKey, requestPasswordReset, signIn, signOutUser, signUp, subscribeToAuth } from "./src/services/auth";
 import { isFirebaseConfigured } from "./src/services/firebase";
 import type { User } from "@firebase/auth";
 import type { AuthScreen } from "./src/types/auth";
-import type { AppRoute, InputType, Language, ScanHistoryRecord, ScanInput, ScanResult, ThemePreference } from "./src/types/scam";
+import type { AppRoute, InputType, Language, ScanHistoryRecord, ScanResult, ThemePreference } from "./src/types/scam";
 
 const primaryRoutes: AppRoute[] = ["Home", "Scan", "Result", "History"];
 const routeKeys: Record<AppRoute, TranslationKey> = {
-  Home: "home", Scan: "scan", Result: "result", History: "history", Assistant: "assistant", Safety: "safety", Profile: "profile",
+  Home: "home", Scan: "scan", Result: "result", History: "history", Safety: "safety", Profile: "profile",
 };
 const routeIcons: Record<AppRoute, keyof typeof Feather.glyphMap> = {
-  Home: "home", Scan: "search", Result: "check-circle", History: "clock", Assistant: "message-circle", Safety: "shield", Profile: "user",
+  Home: "home", Scan: "search", Result: "check-circle", History: "clock", Safety: "shield", Profile: "user",
 };
 
 export default function App() {
@@ -44,14 +42,12 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [scanError, setScanError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [showRetry, setShowRetry] = useState(false);
   const [authScreen, setAuthScreen] = useState<AuthScreen | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
   const scanLock = useRef(false);
-  const lastSubmission = useRef<ScanInput | null>(null);
   const historyRef = useRef<ScanHistoryRecord[]>([]);
   const systemScheme = useColorScheme();
   const colors = getThemeColors(themePreference, systemScheme);
@@ -121,22 +117,8 @@ export default function App() {
     setScanning(true);
     setScanError(null);
     setNotice(null);
-    setShowRetry(false);
-    lastSubmission.current = hasBackendConfiguration() ? { type, content } : null;
     try {
-      let analysis;
-      if (hasBackendConfiguration()) {
-        try {
-          analysis = await analyzeWithBackend({ type, content, language });
-          lastSubmission.current = null;
-        } catch {
-          analysis = analyzeContent({ type, content });
-          setNotice(t("onlineUnavailable"));
-          setShowRetry(true);
-        }
-      } else {
-        analysis = analyzeContent({ type, content });
-      }
+      const analysis = analyzeContent({ type, content });
       const now = new Date().toISOString();
       const completed: ScanResult = { ...analysis, id: `${Date.now()}`, analyzedAt: now };
       setResult(completed);
@@ -160,45 +142,6 @@ export default function App() {
       setRoute("Result");
     } catch (error) {
       setScanError(error instanceof Error ? error.message : t("scanError"));
-    } finally {
-      scanLock.current = false;
-      setScanning(false);
-    }
-  };
-
-  const retryOnline = async () => {
-    const submission = lastSubmission.current;
-    if (!submission || scanLock.current) return;
-    scanLock.current = true;
-    setScanning(true);
-    setNotice(null);
-    setShowRetry(false);
-    try {
-      const analysis = await analyzeWithBackend({ ...submission, language });
-      lastSubmission.current = null;
-      const now = new Date().toISOString();
-      const completed: ScanResult = { ...analysis, id: `${Date.now()}`, analyzedAt: now };
-      setResult(completed);
-      const record: ScanHistoryRecord = {
-        id: completed.id,
-        inputType: submission.type,
-        score: completed.score,
-        level: completed.level,
-        explanation: completed.summary,
-        method: completed.method,
-        scannedAt: now,
-      };
-      const nextHistory = [record, ...historyRef.current.filter((item) => item.id !== result?.id)].slice(0, 100);
-      historyRef.current = nextHistory;
-      setHistory(nextHistory);
-      try {
-        await saveHistory(nextHistory);
-      } catch {
-        setNotice(t("onlineHistorySaveError"));
-      }
-    } catch {
-      setNotice(t("retryError"));
-      setShowRetry(true);
     } finally {
       scanLock.current = false;
       setScanning(false);
@@ -300,16 +243,6 @@ export default function App() {
         {!authScreen && (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t("assistant")}
-            onPress={() => setRoute("Assistant")}
-            style={[styles.profileButton, route === "Assistant" && styles.navSelected]}
-          >
-            <Feather name={routeIcons.Assistant} size={19} color={route === "Assistant" ? colors.blue : colors.secondaryText} />
-          </Pressable>
-        )}
-        {!authScreen && (
-          <Pressable
-            accessibilityRole="button"
             accessibilityLabel={t("profile")}
             onPress={() => setRoute("Profile")}
             style={[styles.profileButton, route === "Profile" && styles.navSelected]}
@@ -323,11 +256,6 @@ export default function App() {
       {!!notice && (
         <View style={styles.noticeBox}>
           <Text accessibilityRole="alert" style={styles.notice}>{notice}</Text>
-          {showRetry && (
-            <Pressable accessibilityRole="button" onPress={retryOnline} disabled={scanning} style={styles.retryButton}>
-              <Text style={styles.retryText}>{scanning ? t("retrying") : t("retryOnline")}</Text>
-            </Pressable>
-          )}
         </View>
       )}
       <View style={styles.main}>
@@ -350,10 +278,9 @@ export default function App() {
           onLogin={() => { setAuthError(null); setAuthScreen("login"); }}
         />}
         {!authScreen && route === "Home" && <HomeScreen language={language} history={history} onNavigate={setRoute} onChooseScan={chooseScan} />}
-        {!authScreen && route === "Scan" && <ScanScreen key={inputType} language={language} initialType={inputType} scanning={scanning} onlineConfigured={hasBackendConfiguration()} error={scanError} onSubmit={startScan} />}
+        {!authScreen && route === "Scan" && <ScanScreen key={inputType} language={language} initialType={inputType} scanning={scanning} error={scanError} onSubmit={startScan} />}
         {!authScreen && route === "Result" && <ResultScreen language={language} result={result} onScanAgain={() => chooseScan(inputType)} onHome={() => setRoute("Home")} />}
         {!authScreen && route === "History" && <HistoryScreen language={language} history={history} onClear={clearHistory} />}
-        {!authScreen && route === "Assistant" && <AssistantScreen language={language} />}
         {!authScreen && route === "Safety" && <SafetyScreen language={language} />}
         {!authScreen && route === "Profile" && <ProfileScreen
           language={language} historyCount={history.length} user={user} authError={authError}
@@ -395,8 +322,6 @@ function createStyles(colors: ThemeColors) { return StyleSheet.create({
   tagline: { color: colors.secondaryText, fontSize: 12, marginTop: 2 },
   noticeBox: { maxWidth: 760, width: "92%", alignSelf: "center", padding: 10, borderRadius: 10, backgroundColor: colors.paleWarning, marginBottom: 4, gap: 7 },
   notice: { color: colors.text, fontSize: 14, lineHeight: 20 },
-  retryButton: { minHeight: 44, justifyContent: "center", alignSelf: "flex-start", paddingHorizontal: 10 },
-  retryText: { color: colors.blue, fontWeight: "800", fontSize: 14 },
   main: { flex: 1, position: "relative" },
   content: { flex: 1 },
   contentWithNav: { paddingTop: 72 },

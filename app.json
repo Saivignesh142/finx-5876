@@ -44,13 +44,6 @@
           "cameraPermission": "FINX uses the camera only when you choose to photograph text for a scan.",
           "microphonePermission": false
         }
-      ],
-      [
-        "expo-speech-recognition",
-        {
-          "microphonePermission": "FINX uses the microphone only when you choose voice input for the assistant.",
-          "speechRecognitionPermission": "FINX uses speech recognition to transcribe your voice for review before sending."
-        }
       ]
     ]
   }

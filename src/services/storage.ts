@@ -7,6 +7,8 @@ const THEME_KEY = "@finx/theme/v1";
 const PROFILE_PHOTO_KEY = "@finx/profile-photo/v1";
 const MAX_PROFILE_PHOTO_URI_LENGTH = 4_096;
 
+type StoredHistoryRecord = Omit<ScanHistoryRecord, "method"> & { method: string };
+
 export async function loadHistory(): Promise<ScanHistoryRecord[]> {
   const serialized = await AsyncStorage.getItem(HISTORY_KEY);
   if (!serialized) return [];
@@ -19,7 +21,7 @@ export async function loadHistory(): Promise<ScanHistoryRecord[]> {
   if (!Array.isArray(parsed) || !parsed.every(isHistoryRecord)) {
     throw new Error("Saved scan history has an invalid format.");
   }
-  return parsed;
+  return parsed.map((record) => ({ ...record, method: "local-rules" }));
 }
 
 export async function saveHistory(records: ScanHistoryRecord[]): Promise<void> {
@@ -71,13 +73,13 @@ export async function clearProfilePhoto(): Promise<void> {
   await AsyncStorage.removeItem(PROFILE_PHOTO_KEY);
 }
 
-function isHistoryRecord(value: unknown): value is ScanHistoryRecord {
+function isHistoryRecord(value: unknown): value is StoredHistoryRecord {
   if (!value || typeof value !== "object") return false;
   if (!("id" in value) || typeof value.id !== "string") return false;
   if (!("inputType" in value) || (value.inputType !== "message" && value.inputType !== "url" && value.inputType !== "transcript")) return false;
   if (!("score" in value) || typeof value.score !== "number" || value.score < 0 || value.score > 100) return false;
   if (!("level" in value) || (value.level !== "low" && value.level !== "medium" && value.level !== "high")) return false;
   if (!("explanation" in value) || typeof value.explanation !== "string") return false;
-  if (!("method" in value) || (value.method !== "local-rules" && value.method !== "backend-rules" && value.method !== "ai-provider")) return false;
+  if (!("method" in value) || typeof value.method !== "string") return false;
   return "scannedAt" in value && typeof value.scannedAt === "string";
 }

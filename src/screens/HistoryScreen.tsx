@@ -46,7 +46,7 @@ export default function HistoryScreen({ language, history, onClear }: HistoryScr
                 <RiskBadge level={item.level} label={t(riskLabelKey[item.level])} />
               </View>
               <Text style={styles.body}>{translateRiskSummary(language, item.level)}</Text>
-              <Text style={styles.meta}>{new Date(item.scannedAt).toLocaleString()} · {item.method === "local-rules" ? t("offline") : t("online")}</Text>
+              <Text style={styles.meta}>{new Date(item.scannedAt).toLocaleString()} · {t("offline")}</Text>
             </View>
           ))}
           <PrimaryButton label={t("clearHistory")} icon="trash-2" variant="secondary" onPress={onClear} />

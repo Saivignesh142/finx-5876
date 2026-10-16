@@ -37,7 +37,6 @@ export default function HomeScreen({ language, history, onNavigate, onChooseScan
         </View>
         <View style={styles.heroActions}>
           <PrimaryButton label={t("scanNow")} icon="search" onPress={() => onChooseScan("message")} style={styles.heroButton} />
-          <PrimaryButton label={t("assistant")} icon="message-circle" onPress={() => onNavigate("Assistant")} variant="secondary" style={styles.heroButton} />
         </View>
       </View>
 

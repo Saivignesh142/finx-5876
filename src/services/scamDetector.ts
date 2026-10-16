@@ -43,14 +43,10 @@ export function analyzeContent(input: ScanInput): Omit<ScanResult, "id" | "analy
     }
   }
 
-  return formatAnalysis(score, signals, "local-rules");
+  return formatAnalysis(score, signals);
 }
 
-export function formatAnalysis(
-  rawScore: number,
-  signals: WarningSignal[],
-  method: "local-rules" | "backend-rules" | "ai-provider",
-): Omit<ScanResult, "id" | "analyzedAt"> {
+function formatAnalysis(rawScore: number, signals: WarningSignal[]): Omit<ScanResult, "id" | "analyzedAt"> {
   const score = Math.max(0, Math.min(100, Math.round(rawScore)));
   const level: RiskLevel = score >= 71 ? "high" : score >= 31 ? "medium" : "low";
   const recommendations = level === "high"
@@ -64,7 +60,7 @@ export function formatAnalysis(
     : level === "medium"
       ? "Some warning signs were found. Pause and verify independently."
       : "Few configured warning signs were found; this does not prove the content is safe.";
-  return { score, level, summary, signals, recommendations, method };
+  return { score, level, summary, signals, recommendations, method: "local-rules" };
 }
 
 export function getRuleSignalDefinition(id: string): WarningSignal | null {

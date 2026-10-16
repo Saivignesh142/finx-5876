@@ -120,7 +120,7 @@ export default function ProfileScreen({ language, historyCount, user, authError,
         </View>
       </View>
       <Info icon="lock" title={t("privacy")} description={t("privacyText")} />
-      <Info icon="shield" title={t("about")} description={t("backendPrivacy")} />
+      <Info icon="shield" title={t("about")} description={t("aboutText")} />
       <View style={styles.card}>
         <SectionHeading icon="clock" title={t("history")} />
         <View style={styles.historySummary}>

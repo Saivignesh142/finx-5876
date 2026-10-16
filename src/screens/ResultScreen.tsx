@@ -47,9 +47,6 @@ export default function ResultScreen({ language, result, onScanAgain, onHome }: 
       ...localizedSignals,
       ...translateRecommendations(language, result.level),
     ].join(". ");
-    const spokenText = result.method === "ai-provider" && result.speechText
-      ? `${translateRiskSummary(language, result.level)}. ${result.speechText}`
-      : localizedSpokenText;
     try {
       const voices = await Speech.getAvailableVoicesAsync();
       const languagePrefix = languageCode[language].split("-")[0];
@@ -58,7 +55,7 @@ export default function ResultScreen({ language, result, onScanAgain, onHome }: 
         return;
       }
       setSpeaking(true);
-      Speech.speak(spokenText, {
+      Speech.speak(localizedSpokenText, {
         language: languageCode[language],
         onDone: () => setSpeaking(false),
         onStopped: () => setSpeaking(false),
@@ -97,8 +94,7 @@ export default function ResultScreen({ language, result, onScanAgain, onHome }: 
           </View>
           <Text style={[styles.score, { color: tone }]}>{result.score}<Text style={styles.outOf}>/100</Text></Text>
         </View>
-        <Text style={styles.text}>{t(result.method === "ai-provider" ? "aiScore" : "score")} · {result.method === "local-rules" ? t("offline") : result.method === "ai-provider" ? t("aiService") : t("online")}</Text>
-        {result.analysisNote === "ai-fallback" && <Text accessibilityRole="alert" style={styles.fallbackNote}>{t("aiFallback")}</Text>}
+        <Text style={styles.text}>{t("score")} · {t("offline")}</Text>
         <Text style={styles.summary}>{translateRiskSummary(language, result.level)}</Text>
         <Pressable
           accessibilityRole="button"
