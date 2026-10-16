@@ -1,6 +1,6 @@
 import React from "react";
+import { useThemeColors, type ThemeColors } from "../theme/ThemeContext";
 import { StyleSheet, Text, View } from "react-native";
-import colors from "../constants/colors";
 import type { RiskLevel } from "../types/scam";
 import type { TranslationKey } from "../constants/translations";
 
@@ -16,6 +16,8 @@ export const riskLabelKey: Record<RiskLevel, TranslationKey> = {
 };
 
 export default function RiskBadge({ level, label }: RiskBadgeProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const color = level === "high" ? colors.red : level === "medium" ? colors.amber : colors.green;
   const background = level === "high" ? colors.paleRed : level === "medium" ? colors.paleAmber : colors.paleGreen;
   return (
@@ -26,8 +28,8 @@ export default function RiskBadge({ level, label }: RiskBadgeProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
   badge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 20 },
   dot: { width: 7, height: 7, borderRadius: 4 },
   text: { fontSize: 12, fontWeight: "800" },
-});
+}); }

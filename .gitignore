@@ -5,4 +5,6 @@ web-build/
 .env
 .env.local
 .vercel/
+.agents/
+.firebase/
 *.tsbuildinfo

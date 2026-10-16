@@ -1,14 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Easing } from "react-native";
+import { AccessibilityInfo, Animated, Easing, Platform } from "react-native";
 
 export default function useScanAnimation(active: boolean) {
   const progress = useRef(new Animated.Value(0)).current;
   const [running, setRunning] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    if (!active) {
+    let mounted = true;
+    const updatePreference = (reduced: boolean) => {
+      if (mounted) setReduceMotion(reduced);
+    };
+    void AccessibilityInfo.isReduceMotionEnabled().then(updatePreference).catch(() => updatePreference(true));
+    const subscription = AccessibilityInfo.addEventListener("reduceMotionChanged", updatePreference);
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!active || reduceMotion) {
       progress.stopAnimation();
-      progress.setValue(0);
+      progress.setValue(reduceMotion ? 1 : 0);
       setRunning(false);
       return;
     }
@@ -18,16 +32,15 @@ export default function useScanAnimation(active: boolean) {
         toValue: 1,
         duration: 1200,
         easing: Easing.inOut(Easing.ease),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== "web",
       })
     );
     loop.start();
     return () => {
       loop.stop();
       progress.stopAnimation();
-      setRunning(false);
     };
-  }, [active, progress]);
+  }, [active, progress, reduceMotion]);
 
   return { progress, running };
 }

@@ -1,6 +1,7 @@
 import React from "react";
+import Feather from "@expo/vector-icons/Feather";
+import { useThemeColors, type ThemeColors } from "../theme/ThemeContext";
 import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
-import colors from "../constants/colors";
 
 interface PrimaryButtonProps {
   label: string;
@@ -9,12 +10,15 @@ interface PrimaryButtonProps {
   loading?: boolean;
   accessibilityLabel?: string;
   variant?: "primary" | "secondary";
+  icon?: keyof typeof Feather.glyphMap;
   style?: ViewStyle;
 }
 
 export default function PrimaryButton({
-  label, onPress, disabled = false, loading = false, accessibilityLabel, variant = "primary", style,
+  label, onPress, disabled = false, loading = false, accessibilityLabel, variant = "primary", icon, style,
 }: PrimaryButtonProps) {
+  const colors = useThemeColors();
+  const styles = createStyles(colors);
   const inactive = disabled || loading;
   return (
     <Pressable
@@ -31,20 +35,23 @@ export default function PrimaryButton({
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color={variant === "primary" ? colors.white : colors.blue} /> : (
-        <Text style={[styles.label, variant === "primary" ? styles.primaryLabel : styles.secondaryLabel]}>{label}</Text>
+      {loading ? <ActivityIndicator color={variant === "primary" ? colors.onWhite : colors.blue} /> : (
+        <>
+          {icon && <Feather name={icon} size={17} color={variant === "primary" ? colors.onWhite : colors.blue} />}
+          <Text style={[styles.label, variant === "primary" ? styles.primaryLabel : styles.secondaryLabel]}>{label}</Text>
+        </>
       )}
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  button: { minHeight: 50, paddingHorizontal: 18, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  primary: { backgroundColor: colors.blue },
+function createStyles(colors: ThemeColors) { return StyleSheet.create({
+  button: { minHeight: 52, paddingHorizontal: 18, borderRadius: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  primary: { backgroundColor: colors.blue, shadowColor: colors.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.16, shadowRadius: 8, elevation: 2 },
   secondary: { backgroundColor: colors.white, borderWidth: 1, borderColor: colors.border },
   label: { fontSize: 15, fontWeight: "700" },
-  primaryLabel: { color: colors.white },
+  primaryLabel: { color: colors.onWhite },
   secondaryLabel: { color: colors.navy },
   disabled: { opacity: 0.55 },
   pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
-});
+}); }
